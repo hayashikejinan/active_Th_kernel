@@ -24,6 +24,7 @@
 #include <asm/mach-types.h>
 #include <linux/mutex.h>
 #include <linux/power_supply.h>
+#include <linux/delay.h>
 
 static struct msm_rpc_endpoint *usb_ep;
 static struct msm_rpc_endpoint *chg_ep;
@@ -419,6 +420,8 @@ int msm_chg_usb_i_is_available(uint32_t sample)
 			__func__, rc);
 	} else
 		pr_debug("msm_chg_usb_i_is_available(%u)\n", sample);
+
+	usleep(3000);
 #endif
 
 	return rc;
@@ -655,7 +658,8 @@ static int hsusb_chg_get_property(struct power_supply *bat_ps,
 		    hsusb_chg_state.connected == USB_CHG_TYPE__WALLCHARGER)
 			val->intval = 1;
 		else if (bat_ps->type == POWER_SUPPLY_TYPE_USB &&
-			 hsusb_chg_state.connected == USB_CHG_TYPE__SDP)
+			 hsusb_chg_state.connected == USB_CHG_TYPE__SDP &&
+			 hsusb_chg_state.usb_chg_current_ma != 0)
 			val->intval = 1;
 		else
 			val->intval = 0;
