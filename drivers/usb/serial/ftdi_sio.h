@@ -1,6 +1,9 @@
 /*
- * Definitions for the FTDI USB Single Port Serial Converter -
+ * Driver definitions for the FTDI USB Single Port Serial Converter -
  * known as FTDI_SIO (Serial Input/Output application of the chipset)
+ *
+ * For USB vendor/product IDs (VID/PID), please see ftdi_sio_ids.h
+ *
  *
  * The example I have is known as the USC-1000 which is available from
  * http://www.dse.co.nz - cat no XH4214 It looks similar to this:
@@ -910,86 +913,6 @@
 #define INTERFACE_C		3
 #define INTERFACE_D		4
 
-/*
- * FIC / OpenMoko, Inc. http://wiki.openmoko.org/wiki/Neo1973_Debug_Board_v3
- * Submitted by Harald Welte <laforge@openmoko.org>
- */
-#define	FIC_VID			0x1457
-#define	FIC_NEO1973_DEBUG_PID	0x5118
-
-/*
- * RATOC REX-USB60F
- */
-#define RATOC_VENDOR_ID		0x0584
-#define RATOC_PRODUCT_ID_USB60F	0xb020
-
-/*
- * DIEBOLD BCS SE923
- */
-#define DIEBOLD_BCS_SE923_PID	0xfb99
-
-/*
- * Atmel STK541
- */
-#define ATMEL_VID		0x03eb /* Vendor ID */
-#define STK541_PID		0x2109 /* Zigbee Controller */
-
-/*
- * Dresden Elektronic Sensor Terminal Board
- */
-#define DE_VID			0x1cf1 /* Vendor ID */
-#define STB_PID			0x0001 /* Sensor Terminal Board */
-#define WHT_PID			0x0004 /* Wireless Handheld Terminal */
-
-/*
- * Blackfin gnICE JTAG
- * http://docs.blackfin.uclinux.org/doku.php?id=hw:jtag:gnice
- */
-#define ADI_VID 		0x0456
-#define ADI_GNICE_PID 		0xF000
-#define ADI_GNICEPLUS_PID 	0xF001
-
-/*
- * JETI SPECTROMETER SPECBOS 1201
- * http://www.jeti.com/products/sys/scb/scb1201.php
- */
-#define JETI_VID		0x0c6c
-#define JETI_SPC1201_PID	0x04b2
-
-/*
- * Marvell SheevaPlug
- */
-#define MARVELL_VID		0x9e88
-#define MARVELL_SHEEVAPLUG_PID	0x9e8f
-
-#define FTDI_TURTELIZER_PID	0xBDC8 /* JTAG/RS-232 adapter by egnite GmBH */
-
-/*
- * GN Otometrics (http://www.otometrics.com)
- * Submitted by Ville Sundberg.
- */
-#define GN_OTOMETRICS_VID	0x0c33	/* Vendor ID */
-#define AURICAL_USB_PID		0x0010	/* Aurical USB Audiometer */
-
-/*
- * Bayer Ascensia Contour blood glucose meter USB-converter cable.
- * http://winglucofacts.com/cables/
- */
-#define BAYER_VID                      0x1A79
-#define BAYER_CONTOUR_CABLE_PID        0x6001
-
-/*
- * Marvell OpenRD Base, Client
- * http://www.open-rd.org
- * OpenRD Base, Client use VID 0x0403
- */
-#define MARVELL_OPENRD_PID	0x9e90
-
-/*
- * Hameg HO820 and HO870 interface (using VID 0x0403)
- */
-#define        HAMEG_HO820_PID         0xed74
-#define        HAMEG_HO870_PID         0xed71
 
 /*
  *   BmRequestType:  1100 0000b
@@ -1504,4 +1427,3 @@ typedef enum {
  * B2..7	Length of message - (not including Byte 0)
  *
  */
-
