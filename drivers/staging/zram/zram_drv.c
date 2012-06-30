@@ -15,6 +15,10 @@
 #define KMSG_COMPONENT "zram"
 #define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
+#ifdef CONFIG_ZRAM_DEBUG
+#define DEBUG
+#endif
+
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/bio.h>
@@ -200,7 +204,7 @@ static void handle_uncompressed_page(struct zram *zram,
 	flush_dcache_page(page);
 }
 
-static int zram_read(struct zram *zram, struct bio *bio)
+static void zram_read(struct zram *zram, struct bio *bio)
 {
 
 	int i;
@@ -208,9 +212,8 @@ static int zram_read(struct zram *zram, struct bio *bio)
 	struct bio_vec *bvec;
 
 	if (unlikely(!zram->init_done)) {
-		set_bit(BIO_UPTODATE, &bio->bi_flags);
-		bio_endio(bio, 0);
-		return 0;
+		bio_endio(bio, -ENXIO);
+		return;
 	}
 
 	zram_stat64_inc(zram, &zram->stats.num_reads);
@@ -227,6 +230,7 @@ static int zram_read(struct zram *zram, struct bio *bio)
 
 		if (zram_test_flag(zram, index, ZRAM_ZERO)) {
 			handle_zero_page(page);
+			index++;
 			continue;
 		}
 
@@ -234,13 +238,15 @@ static int zram_read(struct zram *zram, struct bio *bio)
 		if (unlikely(!zram->table[index].page)) {
 			pr_debug("Read before write: sector=%lu, size=%u",
 				(ulong)(bio->bi_sector), bio->bi_size);
-			/* Do nothing */
+			handle_zero_page(page);
+			index++;
 			continue;
 		}
 
 		/* Page is stored uncompressed since it's incompressible */
 		if (unlikely(zram_test_flag(zram, index, ZRAM_UNCOMPRESSED))) {
 			handle_uncompressed_page(zram, page, index);
+			index++;
 			continue;
 		}
 
@@ -272,14 +278,13 @@ static int zram_read(struct zram *zram, struct bio *bio)
 
 	set_bit(BIO_UPTODATE, &bio->bi_flags);
 	bio_endio(bio, 0);
-	return 0;
+	return;
 
 out:
 	bio_io_error(bio);
-	return 0;
 }
 
-static int zram_write(struct zram *zram, struct bio *bio)
+static void zram_write(struct zram *zram, struct bio *bio)
 {
 	int i, ret;
 	u32 index;
@@ -320,6 +325,7 @@ static int zram_write(struct zram *zram, struct bio *bio)
 			mutex_unlock(&zram->lock);
 			zram_stat_inc(&zram->stats.pages_zero);
 			zram_set_flag(zram, index, ZRAM_ZERO);
+			index++;
 			continue;
 		}
 
@@ -403,11 +409,10 @@ memstore:
 
 	set_bit(BIO_UPTODATE, &bio->bi_flags);
 	bio_endio(bio, 0);
-	return 0;
+	return;
 
 out:
 	bio_io_error(bio);
-	return 0;
 }
 
 /*
@@ -432,7 +437,6 @@ static inline int valid_io_request(struct zram *zram, struct bio *bio)
  */
 static int zram_make_request(struct request_queue *queue, struct bio *bio)
 {
-	int ret = 0;
 	struct zram *zram = queue->queuedata;
 
 	if (!valid_io_request(zram, bio)) {
@@ -443,15 +447,15 @@ static int zram_make_request(struct request_queue *queue, struct bio *bio)
 
 	switch (bio_data_dir(bio)) {
 	case READ:
-		ret = zram_read(zram, bio);
+		zram_read(zram, bio);
 		break;
 
 	case WRITE:
-		ret = zram_write(zram, bio);
+		zram_write(zram, bio);
 		break;
 	}
 
-	return ret;
+	return 0;
 }
 
 void zram_reset_device(struct zram *zram)
@@ -527,7 +531,7 @@ int zram_init_device(struct zram *zram)
 	}
 
 	num_pages = zram->disksize >> PAGE_SHIFT;
-	zram->table = vmalloc(num_pages * sizeof(*zram->table));
+	zram->table = vzalloc(num_pages * sizeof(*zram->table));
 	if (!zram->table) {
 		pr_err("Error allocating zram address table\n");
 		/* To prevent accessing table entries during cleanup */
@@ -535,7 +539,6 @@ int zram_init_device(struct zram *zram)
 		ret = -ENOMEM;
 		goto fail;
 	}
-	memset(zram->table, 0, num_pages * sizeof(*zram->table));
 
 	set_capacity(zram->disk, zram->disksize >> SECTOR_SHIFT);
 
@@ -621,20 +624,19 @@ static int create_device(struct zram *zram, int device_id)
 	 * and n*PAGE_SIZED sized I/O requests.
 	 */
 	blk_queue_physical_block_size(zram->disk->queue, PAGE_SIZE);
-	blk_queue_logical_block_size(zram->disk->queue, PAGE_SIZE);
+	blk_queue_logical_block_size(zram->disk->queue,
+					ZRAM_LOGICAL_BLOCK_SIZE);
 	blk_queue_io_min(zram->disk->queue, PAGE_SIZE);
 	blk_queue_io_opt(zram->disk->queue, PAGE_SIZE);
 
 	add_disk(zram->disk);
 
-#ifdef CONFIG_SYSFS
 	ret = sysfs_create_group(&disk_to_dev(zram->disk)->kobj,
 				&zram_disk_attr_group);
 	if (ret < 0) {
 		pr_warning("Error creating sysfs group");
 		goto out;
 	}
-#endif
 
 	zram->init_done = 0;
 
@@ -644,10 +646,8 @@ out:
 
 static void destroy_device(struct zram *zram)
 {
-#ifdef CONFIG_SYSFS
 	sysfs_remove_group(&disk_to_dev(zram->disk)->kobj,
 			&zram_disk_attr_group);
-#endif
 
 	if (zram->disk) {
 		del_gendisk(zram->disk);
@@ -700,6 +700,7 @@ static int __init zram_init(void)
 free_devices:
 	while (dev_id)
 		destroy_device(&devices[--dev_id]);
+	kfree(devices);
 unregister:
 	unregister_blkdev(zram_major, "zram");
 out:
