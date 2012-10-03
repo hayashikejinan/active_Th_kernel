@@ -8,3 +8,4 @@ bin2c
 unifdef
 binoffset
 ihex2fw
+genksyms
