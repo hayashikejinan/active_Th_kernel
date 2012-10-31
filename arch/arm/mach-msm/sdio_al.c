@@ -2135,6 +2135,14 @@ static int mmc_probe(struct mmc_card *card)
 		return -ENODEV;
 	}
 
+	if ((card->cis.vendor != 0x70) ||
+	    ((card->cis.device != 0x2460) && (card->cis.device != 0x0460))) {
+		dev_info(&card->dev,
+			 "ignore card vendor id %d, device id %d",
+			 card->cis.vendor, card->cis.device);
+		return -ENODEV;
+	}
+
 	if (card->sdio_funcs < SDIO_AL_MAX_FUNCS) {
 		dev_info(&card->dev,
 			 "SDIO-functions# %d less than expected.\n",
