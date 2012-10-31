@@ -1094,7 +1094,6 @@ static int msm_serial_resume(struct platform_device *pdev)
 #endif
 
 static struct platform_driver msm_platform_driver = {
-	.probe = msm_serial_probe,
 	.remove = msm_serial_remove,
 	.suspend = msm_serial_suspend,
 	.resume = msm_serial_resume,
