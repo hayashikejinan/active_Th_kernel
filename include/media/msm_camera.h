@@ -139,6 +139,9 @@
 #define MSM_CAM_IOCTL_ENABLE_OUTPUT_IND  \
     _IOW(MSM_CAM_IOCTL_MAGIC, 34, uint32_t *)
 
+#define MSM_CAM_IOCTL_SET_FD_ROI \
+	_IOW(MSM_CAM_IOCTL_MAGIC, 35, struct fd_roi_info *)
+
 #define MSM_CAMERA_LED_OFF  0
 #define MSM_CAMERA_LED_LOW  1
 #define MSM_CAMERA_LED_HIGH 2
@@ -368,6 +371,11 @@ struct outputCfg {
 #define OUTPUT_TYPE_V		(1<<3)
 #define OUTPUT_TYPE_L		(1<<4)
 
+struct fd_roi_info {
+	void *info;
+	int info_len;
+};
+
 struct msm_frame {
 	uint16_t fmt; /* extension */
 	struct timespec ts;
@@ -380,6 +388,7 @@ struct msm_frame {
 	void *cropinfo;
 	int croplen;
 	uint32_t error_code;
+	struct fd_roi_info roi_info;
 };
 
 #define MSM_CAMERA_ERR_MASK (0xFFFFFFFF & 1)
