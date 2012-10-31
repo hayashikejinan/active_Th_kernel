@@ -124,7 +124,6 @@ void diag_read_smd_qdsp_work_fn(struct work_struct *work)
 static int diagchar_open(struct inode *inode, struct file *file)
 {
 	int i = 0;
-	char currtask_name[FIELD_SIZEOF(struct task_struct, comm) + 1];
 
 	if (driver) {
 		mutex_lock(&driver->diagchar_mutex);
@@ -135,8 +134,7 @@ static int diagchar_open(struct inode *inode, struct file *file)
 
 		if (i < driver->num_clients) {
 			driver->client_map[i].pid = current->tgid;
-			strncpy(driver->client_map[i].name, get_task_comm(
-						currtask_name, current), 20);
+			strncpy(driver->client_map[i].name, current->comm, 20);
 			driver->client_map[i].name[19] = '\0';
 		} else {
 			if (i < threshold_client_limit) {
@@ -146,8 +144,7 @@ static int diagchar_open(struct inode *inode, struct file *file)
 						 diag_client_map), GFP_KERNEL);
 				driver->client_map[i].pid = current->tgid;
 				strncpy(driver->client_map[i].name,
-					get_task_comm(currtask_name,
-							 current), 20);
+					current->comm, 20);
 				driver->client_map[i].name[19] = '\0';
 			} else {
 				mutex_unlock(&driver->diagchar_mutex);
@@ -156,8 +153,7 @@ static int diagchar_open(struct inode *inode, struct file *file)
 					printk(KERN_ALERT "Max client limit for"
 						 "DIAG driver reached\n");
 					printk(KERN_INFO "Cannot open handle %s"
-					   " %d", get_task_comm(currtask_name,
-						 current), current->tgid);
+					   " %d", current->comm, current->tgid);
 				for (i = 0; i < driver->num_clients; i++)
 					printk(KERN_INFO "%d) %s PID=%d"
 					, i, driver->client_map[i].name,
