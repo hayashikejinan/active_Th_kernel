@@ -129,6 +129,8 @@ enum {
 #define MDP4_ANY_INTR_MASK	(INTR_DMA_P_DONE| \
 				INTR_DMA_P_HISTOGRAM)
 #endif
+void mdp_hw_cursor_done(void);
+void mdp_hw_cursor_init(void);
 
 enum {
 	OVERLAY_PIPE_RGB1,
