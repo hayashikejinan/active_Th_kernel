@@ -3811,6 +3811,8 @@ static struct platform_device *devices[] __initdata = {
 #endif
 	/*      &msm_batt_device, */
 	/*      &msm_adc_device, */
+	&msm_ebi0_thermal,
+	&msm_ebi1_thermal,
 #ifdef CONFIG_SIMPLE_REMOTE_PLATFORM
 	&simple_remote_pf_device,
 #endif
