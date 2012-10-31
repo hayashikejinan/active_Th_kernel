@@ -994,8 +994,11 @@ static int mdp_irq_clk_setup(void)
 	/*
 	 * mdp_clk should greater than mdp_pclk always
 	 */
-	if (mdp_pdata && mdp_pdata->mdp_core_clk_rate)
+	if (mdp_pdata && mdp_pdata->mdp_core_clk_rate) {
+		mutex_lock(&mdp_clk_lock);
 		clk_set_rate(mdp_clk, mdp_pdata->mdp_core_clk_rate);
+		mutex_unlock(&mdp_clk_lock);
+	}
 	printk(KERN_INFO "mdp_clk: mdp_clk=%d\n", (int)clk_get_rate(mdp_clk));
 #endif
 
