@@ -31,6 +31,7 @@
 #include <linux/delay.h>
 #include <linux/mutex.h>
 #include <linux/pm_runtime.h>
+#include <linux/regulator/consumer.h>
 
 #include <asm/system.h>
 #include <asm/mach-types.h>
@@ -47,6 +48,7 @@
 uint32 mdp4_extn_disp;
 static struct clk *mdp_clk;
 static struct clk *mdp_pclk;
+struct regulator *footswitch;
 
 struct completion mdp_ppp_comp;
 struct semaphore mdp_ppp_mutex;
@@ -539,6 +541,8 @@ void mdp_pipe_ctrl(MDP_BLOCK_TYPE block, MDP_BLOCK_POWER_STATE state,
 			mutex_lock(&mdp_suspend_mutex);
 			if (block == MDP_MASTER_BLOCK || mdp_suspended) {
 				mdp_current_clk_on = FALSE;
+				if (footswitch != NULL)
+					regulator_disable(footswitch);
 				/* turn off MDP clks */
 				mdp_vsync_clk_disable();
 				for (i = 0; i < pdev_list_cnt; i++) {
@@ -630,6 +634,8 @@ irqreturn_t mdp_isr(int irq, void *ptr)
 				dma->waiting = FALSE;
 				complete(&dma->comp);
 			}
+			if (footswitch != NULL)
+				regulator_enable(footswitch);
 		}
 #ifndef CONFIG_FB_MSM_MDP22
 		if (mdp_interrupt & MDP_HIST_DONE) {
@@ -968,6 +974,10 @@ static int mdp_irq_clk_setup(void)
 	}
 	disable_irq(INT_MDP);
 
+	footswitch = regulator_get(NULL, "fs_mdp");
+	if (IS_ERR(footswitch))
+		footswitch = NULL;
+
 	mdp_clk = clk_get(NULL, "mdp_clk");
 	if (IS_ERR(mdp_clk)) {
 		ret = PTR_ERR(mdp_clk);
@@ -1305,6 +1315,8 @@ static void mdp_early_resume(struct early_suspend *h)
 
 static int mdp_remove(struct platform_device *pdev)
 {
+	if (footswitch != NULL)
+		regulator_put(footswitch);
 	iounmap(msm_mdp_base);
 	pm_runtime_disable(&pdev->dev);
 	return 0;
