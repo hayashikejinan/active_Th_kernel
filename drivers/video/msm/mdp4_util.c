@@ -470,6 +470,7 @@ irqreturn_t mdp4_isr(int irq, void *ptr)
 				mdp_pipe_ctrl(MDP_DMA2_BLOCK,
 					MDP_BLOCK_POWER_OFF, TRUE);
 			}
+
 			complete(&dma->comp);
 		}
 		if (isr & INTR_DMA_S_DONE) {
@@ -531,6 +532,8 @@ irqreturn_t mdp4_isr(int irq, void *ptr)
 #endif
 			}
 #endif
+
+
 #ifdef CONFIG_FB_MSM_OVERLAY
 			mdp_hw_cursor_done();
 #endif

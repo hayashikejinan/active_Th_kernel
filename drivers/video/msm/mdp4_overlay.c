@@ -1572,7 +1572,8 @@ int mdp4_overlay_set(struct fb_info *info, struct mdp_overlay *req)
 						req->src.format);
 	mdp4_del_res_rel = 0;
 	up(&mfd->dma->ov_sem);
-    mdp_set_core_clk(perf_level);
+	mdp_set_core_clk(perf_level);
+
 #ifdef CONFIG_MSM_BUS_SCALING
 	mdp_bus_scale_update_request(OVERLAY_BUS_SCALE_TABLE_BASE
 						- perf_level);
