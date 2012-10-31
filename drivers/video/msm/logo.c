@@ -49,8 +49,8 @@ static void memset32(void *_ptr, unsigned int val, unsigned count)
 int load_565rle_image(char *filename)
 {
 	struct fb_info *info;
-	int fd, err = 0;
-	unsigned count, max;
+	int fd, count, err = 0;
+	unsigned max;
 	unsigned short *data, *ptr;
 	unsigned char *bits;
 
@@ -67,9 +67,8 @@ int load_565rle_image(char *filename)
 			__func__, filename);
 		return -ENOENT;
 	}
-	count = (unsigned)sys_lseek(fd, (off_t)0, 2);
-	if (count == 0) {
-		sys_close(fd);
+	count = sys_lseek(fd, (off_t)0, 2);
+	if (count <= 0) {
 		err = -EIO;
 		goto err_logo_close_file;
 	}
@@ -80,7 +79,7 @@ int load_565rle_image(char *filename)
 		err = -ENOMEM;
 		goto err_logo_close_file;
 	}
-	if ((unsigned)sys_read(fd, (char *)data, count) != count) {
+	if (sys_read(fd, (char *)data, count) != count) {
 		err = -EIO;
 		goto err_logo_free_data;
 	}
