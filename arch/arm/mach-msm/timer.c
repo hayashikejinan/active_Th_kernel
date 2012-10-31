@@ -423,7 +423,10 @@ static void msm_timer_set_mode(enum clock_event_mode mode,
 			clock->irq.irq);
 		}
 
-		writel(0, clock->regbase + TIMER_ENABLE);
+#ifdef CONFIG_ARCH_MSM_SCORPIONMP
+		if (clock != &msm_clocks[MSM_CLOCK_DGT])
+#endif
+			writel(0, clock->regbase + TIMER_ENABLE);
 
 		if (clock != &msm_clocks[MSM_CLOCK_GPT]) {
 			gpt_state->in_sync = 0;
@@ -1023,6 +1026,9 @@ static void __init msm_timer_init(void)
 		get_irq_chip(clock->irq.irq)->mask(clock->irq.irq);
 		clockevents_register_device(ce);
 	}
+#ifdef CONFIG_ARCH_MSM_SCORPIONMP
+	writel(1, msm_clocks[MSM_CLOCK_DGT].regbase + TIMER_ENABLE);
+#endif
 }
 
 #ifdef CONFIG_SMP
