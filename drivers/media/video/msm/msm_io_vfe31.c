@@ -593,6 +593,8 @@ int msm_camio_probe_on(struct platform_device *pdev)
 {
 	struct msm_camera_sensor_info *sinfo = pdev->dev.platform_data;
 	struct msm_camera_device_platform_data *camdev = sinfo->pdata;
+	camio_clk = camdev->ioclk;
+	camio_ext = camdev->ioext;
 	camdev->camera_gpio_on();
 #if defined(CONFIG_MACH_SEMC_ZEUS) || defined(CONFIG_MACH_SEMC_PHOENIX)
 	return msm_camio_clk_enable(CAMIO_CAM_MCLK_CLK);
