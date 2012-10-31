@@ -21,10 +21,14 @@
  */
 #include <linux/interrupt.h>
 #include <linux/i2c.h>
+#include <linux/slab.h>
+#include <linux/ratelimit.h>
 #include <linux/kthread.h>
 #include <linux/mfd/core.h>
 #include <linux/mfd/pmic8058.h>
 #include <linux/platform_device.h>
+#include <linux/ratelimit.h>
+#include <linux/slab.h>
 
 /* PMIC8058 Revision */
 #define SSBI_REG_REV			0x002  /* PMIC4 revision */
@@ -632,9 +636,6 @@ static int pm8058_probe(struct i2c_client *client,
 		return -ENOMEM;
 	}
 
-	for (i = 0; i < MAX_PM_IRQ; i++)
-		chip->config[i] = PM8058_IRQF_MASK_ALL;
-
 	chip->dev = client;
 
 	/* Read PMIC chip revision */
@@ -725,12 +726,11 @@ static int pm8058_suspend(struct device *dev)
 
 	for (i = 0; i < MAX_PM_IRQ; i++) {
 		spin_lock_irqsave(&chip->pm_lock, irqsave);
-
-		if (!chip->wake_enable[i] &&
-				((chip->config[i] & PM8058_IRQF_MASK_ALL)
-						!= PM8058_IRQF_MASK_ALL))
-			pm8058_irq_mask(i + chip->pdata.irq_base);
-
+		if (chip->config[i] && !chip->wake_enable[i]) {
+			if (!((chip->config[i] & PM8058_IRQF_MASK_ALL)
+			      == PM8058_IRQF_MASK_ALL))
+				pm8058_irq_mask(i + chip->pdata.irq_base);
+		}
 		spin_unlock_irqrestore(&chip->pm_lock, irqsave);
 	}
 
@@ -752,12 +752,11 @@ static int pm8058_resume(struct device *dev)
 
 	for (i = 0; i < MAX_PM_IRQ; i++) {
 		spin_lock_irqsave(&chip->pm_lock, irqsave);
-
-		if (!chip->wake_enable[i] &&
-				((chip->config[i] & PM8058_IRQF_MASK_ALL)
-						!= PM8058_IRQF_MASK_ALL))
-			pm8058_irq_unmask(i + chip->pdata.irq_base);
-
+		if (chip->config[i] && !chip->wake_enable[i]) {
+			if (!((chip->config[i] & PM8058_IRQF_MASK_ALL)
+			      == PM8058_IRQF_MASK_ALL))
+				pm8058_irq_unmask(i + chip->pdata.irq_base);
+		}
 		spin_unlock_irqrestore(&chip->pm_lock, irqsave);
 	}
 
@@ -810,3 +809,4 @@ MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("PMIC8058 core driver");
 MODULE_VERSION("1.0");
 MODULE_ALIAS("platform:pmic8058-core");
+
