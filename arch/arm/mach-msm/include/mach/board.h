@@ -103,6 +103,7 @@ struct msm_camera_sensor_pwr {
 
 #define MSM_CAMERA_FLASH_SRC_PMIC (0x00000001<<0)
 #define MSM_CAMERA_FLASH_SRC_PWM  (0x00000001<<1)
+#define MSM_CAMERA_FLASH_SRC_CURRENT_DRIVER    (0x00000001<<2)
 #if defined(CONFIG_MACH_SEMC_ZEUS) || defined(CONFIG_MACH_SEMC_PHOENIX)
 #define MSM_CAMERA_FLASH_SRC_LED  (0x00000001<<2)
 #endif /* CONFIG_MACH_SEMC_ZEUS */
@@ -124,12 +125,21 @@ struct msm_camera_sensor_flash_pwm {
 	uint32_t channel;
 };
 
+struct pmic8058_leds_platform_data;
+struct msm_camera_sensor_flash_current_driver {
+	uint32_t low_current;
+	uint32_t high_current;
+	const struct pmic8058_leds_platform_data *driver_channel;
+};
+
 struct msm_camera_sensor_flash_src {
 	int flash_sr_type;
 
 	union {
 		struct msm_camera_sensor_flash_pmic pmic_src;
 		struct msm_camera_sensor_flash_pwm pwm_src;
+		struct msm_camera_sensor_flash_current_driver
+			current_driver_src;
 #if defined(CONFIG_MACH_SEMC_ZEUS) || defined(CONFIG_MACH_SEMC_PHOENIX)
 		struct gpio_led_platform_data *gpio_led_src;
 #endif /* CONFIG_MACH_SEMC_ZEUS */
