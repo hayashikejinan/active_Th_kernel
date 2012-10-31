@@ -106,9 +106,10 @@ do { \
 #define D(x...) do {} while (0)
 #endif
 
-static void sdio_ctl_receive_cb(int id, void *data, int size)
+static void sdio_ctl_receive_cb(void *data, int size, void *priv)
 {
 	struct sdio_ctl_list_elem *list_elem = NULL;
+	int id = ((struct sdio_ctl_dev *)(priv))->id;
 
 	if (id < 0 || id >= NUM_SDIO_CTL_PORTS)
 		return;
@@ -136,8 +137,9 @@ static void sdio_ctl_receive_cb(int id, void *data, int size)
 	wake_up(&sdio_ctl_devp[id]->read_wait_queue);
 }
 
-static void sdio_ctl_write_done(int id, void *data, int size)
+static void sdio_ctl_write_done(void *data, int size, void *priv)
 {
+	int id = ((struct sdio_ctl_dev *)(priv))->id;
 	if (id < 0 || id >= NUM_SDIO_CTL_PORTS)
 		return;
 
@@ -292,7 +294,7 @@ int sdio_ctl_open(struct inode *inode, struct file *file)
 
 	D("%s called on sdioctl%d device\n", __func__, sdio_ctl_devp->id);
 	r = sdio_cmux_open(sdio_ctl_devp->id, sdio_ctl_receive_cb,
-			   sdio_ctl_write_done, NULL);
+			   sdio_ctl_write_done, sdio_ctl_devp);
 	if (r < 0) {
 		pr_err("ERROR %s: sdio_cmux_open failed with rc %d\n",
 			__func__, r);
