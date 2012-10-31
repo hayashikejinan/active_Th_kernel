@@ -34,7 +34,9 @@
 #include <linux/clk.h>
 #include <linux/platform_device.h>
 #include <linux/pm_runtime.h>
-
+#ifndef CONFIG_MSM_BUS_SCALING
+#include <linux/pm_qos_params.h>
+#endif
 #include "msm_fb.h"
 #include "mddihosti.h"
 #include "mddihost.h"
