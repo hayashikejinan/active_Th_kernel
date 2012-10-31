@@ -46,6 +46,8 @@
 #define MSMFB_OVERLAY_BLT       _IOWR(MSMFB_IOCTL_MAGIC, 144, \
 						struct msmfb_overlay_blt)
 #define MSMFB_OVERLAY_BLT_OFFSET     _IOW(MSMFB_IOCTL_MAGIC, 145, unsigned int)
+#define MSMFB_HISTOGRAM_START	_IO(MSMFB_IOCTL_MAGIC, 146)
+#define MSMFB_HISTOGRAM_STOP	_IO(MSMFB_IOCTL_MAGIC, 147)
 #define MSMFB_OVERLAY_PLAY_WAIT _IOWR(MSMFB_IOCTL_MAGIC, 149, \
 						struct msmfb_overlay_data)
 
