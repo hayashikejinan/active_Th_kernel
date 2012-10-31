@@ -56,6 +56,7 @@
 #include <mach/qdsp5v2/msm_lpa.h>
 #include <mach/qdsp5v2/mi2s.h>
 #include <mach/qdsp5v2/audio_dev_ctl.h>
+#include <mach/sdio_al.h>
 #include <mach/dma.h>
 #include <linux/android_pmem.h>
 #include <mach/pmic.h>
