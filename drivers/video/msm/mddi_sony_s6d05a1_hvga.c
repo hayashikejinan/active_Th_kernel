@@ -964,6 +964,7 @@ static void __init msm_mddi_sony_hvga_display_device_init(void)
 	panel_data->panel_info.xres = SONY_HVGA_PANEL_XRES;
 	panel_data->panel_info.yres = SONY_HVGA_PANEL_YRES;
 	panel_data->panel_info.pdest = DISPLAY_1;
+	MSM_FB_SINGLE_MODE_PANEL(&panel_data->panel_info);
 	panel_data->panel_info.type = MDDI_PANEL;
 	/*panel_date->panel_info.mddi.vdopkt = 0x0023;*/
 	panel_data->panel_info.mddi.vdopkt = MDDI_DEFAULT_PRIM_PIX_ATTR;
