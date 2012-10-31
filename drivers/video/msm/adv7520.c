@@ -384,6 +384,9 @@ static void adb7520_chip_init(void)
 	/* Get the "HDMI/DVI Selection" register. */
 	reg[0xaf] = adv7520_read_reg(hclient, 0xaf);
 
+	/* Read Packet Memory I2C Address */
+	reg[0x45] = adv7520_read_reg(hclient, 0x45);
+
 	/* Hard coded values provided by ADV7520 data sheet. */
 	reg[0x98] = 0x03;
 	reg[0x9c] = 0x38;
@@ -430,6 +433,9 @@ static void adb7520_chip_init(void)
 	adv7520_write_reg(hclient, 0x94, reg[0x94]);
 	adv7520_write_reg(hclient, 0x95, reg[0x95]);
 
+	/* Set Packet Memory I2C Address */
+	reg[0x45] = 0x74;
+
 	/* Set the values from the "Fixed Registers That Must Be Set". */
 	adv7520_write_reg(hclient, 0x98, reg[0x98]);
 	adv7520_write_reg(hclient, 0x9c, reg[0x9c]);
@@ -466,6 +472,9 @@ static void adb7520_chip_init(void)
 	adv7520_write_reg(hclient, 0x55, reg[0x55]);
 	adv7520_write_reg(hclient, 0x3c, reg[0x3c]);
 
+	/* Set Packet Memory address to avoid conflict
+	with Bosch Accelerometer */
+	adv7520_write_reg(hclient, 0x45, reg[0x45]);
 }
 
 static void adv7520_handle_cable_work(struct work_struct *work)
