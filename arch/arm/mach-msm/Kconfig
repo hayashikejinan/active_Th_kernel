@@ -1474,4 +1474,10 @@ config MMC_MSM_SDC4_LOW_DRIVE_STRENGTH
 	help
 	  Enable to configure the low drive strength for SDC4.
 
+config MSM_WATCHDOG_DEBUG
+	bool "Enable download mode on Watchdog reset"
+	depends on MSM_WATCHDOG
+	help
+		This makes the target enter download mode when it is reset by
+		the watchdog. Provides debugging support with watchdog enabled
 endif
