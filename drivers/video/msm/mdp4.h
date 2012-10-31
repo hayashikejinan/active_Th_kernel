@@ -78,12 +78,12 @@ enum {
 	EBI2_LCD1
 };
 
-#define MDP4_PANEL_MDDI         BIT(0)
-#define MDP4_PANEL_LCDC         BIT(1)
-#define MDP4_PANEL_DTV          BIT(2)
-#define MDP4_PANEL_ATV          BIT(3)
-#define MDP4_PANEL_DSI_VIDEO    BIT(4)
-#define MDP4_PANEL_DSI_CMD      BIT(5)
+#define MDP4_PANEL_MDDI		BIT(0)
+#define MDP4_PANEL_LCDC		BIT(1)
+#define MDP4_PANEL_DTV		BIT(2)
+#define MDP4_PANEL_ATV		BIT(3)
+#define MDP4_PANEL_DSI_VIDEO	BIT(4)
+#define MDP4_PANEL_DSI_CMD	BIT(5)
 
 enum {
 	OVERLAY_MODE_NONE,
@@ -124,7 +124,7 @@ enum {
 
 #ifdef CONFIG_FB_MSM_OVERLAY
 #define MDP4_ANY_INTR_MASK	(INTR_OVERLAY0_DONE|INTR_DMA_S_DONE | \
-					INTR_DMA_P_HISTOGRAM)
+					INTR_DMA_P_DONE | INTR_DMA_P_HISTOGRAM)
 #else
 #define MDP4_ANY_INTR_MASK	(INTR_DMA_P_DONE| \
 				INTR_DMA_P_HISTOGRAM)
@@ -410,10 +410,11 @@ void mdp4_overlay_dmap_xy(struct mdp4_overlay_pipe *pipe);
 void mdp4_overlay_dmae_cfg(struct msm_fb_data_type *mfd, int atv);
 void mdp4_overlay_dmae_xy(struct mdp4_overlay_pipe *pipe);
 int mdp4_overlay_pipe_staged(int mixer);
+void mdp4_lcdc_primary_vsyn(void);
 void mdp4_overlay0_done_lcdc(void);
 void mdp4_overlay0_done_mddi(void);
-void mdp4_dma_p_done_mddi(void);
 void mdp4_dma_s_done_mddi(void);
+void mdp4_dma_p_done_mddi(void);
 void mdp4_external_vsync_dtv(void);
 void mdp4_overlay1_done_dtv(void);
 void mdp4_overlay1_done_atv(void);
@@ -429,6 +430,13 @@ void mdp4_mixer_gc_lut_setup(int mixer_num);
 void mdp4_fetch_cfg(uint32 clk);
 uint32 mdp4_rgb_igc_lut_cvt(uint32 ndx);
 void mdp4_vg_qseed_init(int);
+int mdp4_overlay_blt(struct fb_info *info, struct msmfb_overlay_blt *req,
+		struct file **pp_src_file);
+int mdp4_overlay_blt_offset(struct fb_info *info, int *off);
+int mdp4_mddi_overlay_blt_offset(int *off);
+void mdp4_mddi_overlay_blt(ulong addr);
+int mdp4_lcdc_overlay_blt_offset(int *off);
+void mdp4_lcdc_overlay_blt(ulong addr);
 void mdp4_overlay_panel_mode(int mixer_num, uint32 mode);
 int mdp4_overlay_mixer_play(int mixer_num);
 uint32 mdp4_overlay_panel_list(void);
