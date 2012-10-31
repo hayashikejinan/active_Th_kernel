@@ -350,6 +350,8 @@ void mdp4_mddi_overlay_blt(ulong addr)
 	}
 	spin_unlock_irqrestore(&mdp_spin_lock, flag);
 }
+static ulong mddi_last_kick;
+static ulong mddi_kick_interval;
 
 void mdp4_blt_xy_update(struct mdp4_overlay_pipe *pipe)
 {
@@ -528,6 +530,18 @@ void mdp4_mddi_overlay_kickoff(struct msm_fb_data_type *mfd,
 	mfd->dma->busy = TRUE;
 	/* start OVERLAY pipe */
 	mdp_pipe_kickoff(MDP_OVERLAY0_TERM, mfd);
+	if (pipe != mddi_pipe) { /* non base layer */
+		int intv;
+
+		if (mddi_last_kick == 0)
+			intv = 0;
+		else
+			intv = jiffies - mddi_last_kick;
+
+		mddi_kick_interval += intv;
+		mddi_kick_interval /= 2;        /* average */
+		mddi_last_kick = jiffies;
+	}
 	up(&mfd->sem);
 
 	if (pdata && pdata->power_on_panel_at_pan) {
