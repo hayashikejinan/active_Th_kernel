@@ -2052,9 +2052,6 @@ static int msm_set_crop(struct msm_sync *sync, void __user *arg)
 			mutex_unlock(&sync->lock);
 			return -ENOMEM;
 		}
-	} else if (sync->croplen != crop.len) {
-		mutex_unlock(&sync->lock);
-		return -EINVAL;
 	}
 
 	if (copy_from_user(sync->cropinfo,
