@@ -356,16 +356,18 @@ static ulong mddi_kick_interval;
 void mdp4_blt_xy_update(struct mdp4_overlay_pipe *pipe)
 {
 	uint32 off, addr;
+	int bpp;
 	char *overlay_base;
 
 
 	if (pipe->blt_addr == 0)
 		return;
 
-	/* overlay ouput is RGB888 */
+	/* overlay ouput is RGB565 */
+	bpp = 2;
 	off = 0;
 	if (pipe->blt_cnt & 0x01)
-		off = pipe->src_height * pipe->src_width * 3;
+		off = pipe->src_height * pipe->src_width * bpp;
 
 	addr = pipe->blt_addr + off;
 
