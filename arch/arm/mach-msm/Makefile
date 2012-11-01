@@ -194,6 +194,7 @@ endif
 
 obj-$(CONFIG_MSM_SLEEP_STATS) += msm_sleep_stats.o idle_stats.o
 obj-$(CONFIG_MSM_SHOW_RESUME_IRQ) += msm_show_resume_irq.o
+obj-$(CONFIG_BT_MSM_PINTEST)  += btpintest.o
 obj-$(CONFIG_MSM7200A_TLMM)	+= tlmm-msm7200a.o
 obj-$(CONFIG_MSM8660_TLMM)	+= tlmm-msm8660.o msm8660-gpio.o
 obj-$(CONFIG_SEMC_RPC_SERVER_HANDSET) += semc_rpc_server_handset.o
