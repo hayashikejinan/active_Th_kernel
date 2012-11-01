@@ -439,7 +439,7 @@ static void msm_timer_set_mode(enum clock_event_mode mode,
 		}
 
 #ifdef CONFIG_ARCH_MSM_SCORPIONMP
-		if (clock != &msm_clocks[MSM_CLOCK_DGT])
+		if (clock != &msm_clocks[MSM_CLOCK_DGT] || smp_processor_id())
 #endif
 			writel(0, clock->regbase + TIMER_ENABLE);
 
