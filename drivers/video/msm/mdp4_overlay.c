@@ -1668,8 +1668,10 @@ int mdp4_overlay_set(struct fb_info *info, struct mdp_overlay *req)
 	mdp_set_core_clk(perf_level);
 
 #ifdef CONFIG_MSM_BUS_SCALING
-	mdp_bus_scale_update_request(OVERLAY_BUS_SCALE_TABLE_BASE
+	if (pipe->mixer_num == MDP4_MIXER0) {
+		mdp_bus_scale_update_request(OVERLAY_BUS_SCALE_TABLE_BASE
 						- perf_level);
+	}
 #endif
 
 	return 0;
@@ -1734,7 +1736,8 @@ int mdp4_overlay_unset(struct fb_info *info, int ndx)
 	up(&mfd->dma->ov_sem);
 
 #ifdef CONFIG_MSM_BUS_SCALING
-	mdp_bus_scale_update_request(2);
+	if (pipe->mixer_num == MDP4_MIXER0)
+		mdp_bus_scale_update_request(2);
 #endif
 	return 0;
 }
