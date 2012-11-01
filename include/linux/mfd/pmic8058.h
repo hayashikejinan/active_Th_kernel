@@ -101,6 +101,7 @@ struct pm8058_platform_data {
 	int		num_subdevs;
 	struct mfd_cell *sub_devices;
 	int		irq_trigger_flags;
+	struct mfd_cell *charger_sub_device;
 };
 
 struct pm8058_gpio_platform_data {
