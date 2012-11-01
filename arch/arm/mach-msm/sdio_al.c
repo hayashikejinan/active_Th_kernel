@@ -1,4 +1,4 @@
-/* Copyright (c) 2010, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2010-2011, Code Aurora Forum. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -51,8 +51,6 @@
 
 #define MODULE_NAME "sdio_al"
 #define DRV_VERSION "1.10"
-
-/* #define DEBUG_SDIO_AL_UNIT_TEST 1 */
 
 /**
  *  Func#0 has SDIO standard registers
@@ -253,6 +251,7 @@ struct peer_sdioc_channel_config {
 };
 
 #define PEER_SDIOC_SW_MAILBOX_SIGNATURE 0xFACECAFE
+#define PEER_SDIOC_SW_MAILBOX_UT_SIGNATURE 0x5D107E57
 
 /* Identifies if there are new features released */
 #define PEER_SDIOC_VERSION_MINOR	0x0002
@@ -475,6 +474,7 @@ struct sdio_al {
 
 	struct sdio_al_debug debug;
 
+	int unittest_mode;
 };
 
 /** The driver context */
@@ -1132,7 +1132,14 @@ static int read_sdioc_software_header(struct peer_sdioc_sw_header *header)
 		goto exit_err;
 	}
 
-	if (header->signature != (u32) PEER_SDIOC_SW_MAILBOX_SIGNATURE) {
+	if (header->signature == (u32)PEER_SDIOC_SW_MAILBOX_UT_SIGNATURE) {
+		pr_info(MODULE_NAME ":SDIOC SW unittest signature. 0x%x\n",
+			header->signature);
+		sdio_al->unittest_mode = true;
+	}
+
+	if ((header->signature != (u32) PEER_SDIOC_SW_MAILBOX_SIGNATURE) &&
+	    (header->signature != (u32) PEER_SDIOC_SW_MAILBOX_UT_SIGNATURE)) {
 		pr_err(MODULE_NAME ":SDIOC SW invalid signature. 0x%x\n",
 			header->signature);
 		goto exit_err;
@@ -2225,7 +2232,6 @@ static struct platform_driver msm_sdio_al_driver = {
 };
 
 
-#ifndef DEBUG_SDIO_AL_UNIT_TEST
 /**
  *  Default platform device release function.
  *
@@ -2234,7 +2240,6 @@ static void default_sdio_al_release(struct device *dev)
 {
 	pr_info(MODULE_NAME ":platform device released.\n");
 }
-#endif
 
 /**
  *  Initialize SDIO_AL channels.
@@ -2280,9 +2285,7 @@ static int mmc_probe(struct mmc_card *card)
 {
 	int ret = 0;
 
-#ifndef DEBUG_SDIO_AL_UNIT_TEST
 	int i;
-#endif
 
 	dev_info(&card->dev, "Probing..\n");
 
@@ -2337,18 +2340,19 @@ static int mmc_probe(struct mmc_card *card)
 	if (ret)
 		return ret;
 
-#ifdef DEBUG_SDIO_AL_UNIT_TEST
-	pr_info(MODULE_NAME ":==== SDIO-AL UNIT-TEST ====\n");
-#else
-	/* Allow clients to probe for this driver */
-	for (i = 0; i < SDIO_AL_MAX_CHANNELS; i++) {
-		if (!sdio_al->channel[i].is_valid)
-			continue;
-		sdio_al->channel[i].pdev.name = sdio_al->channel[i].name;
-		sdio_al->channel[i].pdev.dev.release = default_sdio_al_release;
-		platform_device_register(&sdio_al->channel[i].pdev);
-	}
-#endif
+	if (sdio_al->unittest_mode)
+		pr_info(MODULE_NAME ":==== SDIO-AL UNIT-TEST ====\n");
+	else
+		/* Allow clients to probe for this driver */
+		for (i = 0; i < SDIO_AL_MAX_CHANNELS; i++) {
+			if (!sdio_al->channel[i].is_valid)
+				continue;
+			sdio_al->channel[i].pdev.name =
+				sdio_al->channel[i].name;
+			sdio_al->channel[i].pdev.dev.release =
+				default_sdio_al_release;
+			platform_device_register(&sdio_al->channel[i].pdev);
+		}
 
 	return ret;
 }
@@ -2359,15 +2363,15 @@ static int mmc_probe(struct mmc_card *card)
  */
 static void mmc_remove(struct mmc_card *card)
 {
-	#ifndef DEBUG_SDIO_AL_UNIT_TEST
-	int i;
+	if (!sdio_al->unittest_mode) {
+		int i;
 
-	for (i = 0; i < SDIO_AL_MAX_CHANNELS; i++) {
-		if (!sdio_al->channel[i].is_valid)
-			continue;
-		platform_device_unregister(&sdio_al->channel[i].pdev);
+		for (i = 0; i < SDIO_AL_MAX_CHANNELS; i++) {
+			if (!sdio_al->channel[i].is_valid)
+				continue;
+			platform_device_unregister(&sdio_al->channel[i].pdev);
+		}
 	}
-	#endif
 
 	pr_info(MODULE_NAME ":sdio card removed.\n");
 	platform_driver_unregister(&msm_sdio_al_driver);
@@ -2508,6 +2512,8 @@ static int __init sdio_al_init(void)
 	sdio_al->is_suspended = 0;
 
 	sdio_al->is_err = false;
+
+	sdio_al->unittest_mode = false;
 
 	sdio_al->debug.debug_lpm_on = 0;
 	sdio_al->debug.debug_data_on = 0;
