@@ -892,6 +892,8 @@ err:
 #ifdef CONFIG_DIAG_NO_MODEM
 		kfree(driver->apps_rsp_buf);
 #endif
+		if (driver->diag_wq)
+			destroy_workqueue(driver->diag_wq);
 }
 
 void diagfwd_exit(void)
