@@ -454,6 +454,10 @@ irqreturn_t mdp4_isr(int irq, void *ptr)
 			break;
 
 		panel = mdp4_overlay_panel_list();
+		if (isr & INTR_PRIMARY_VSYNC) {
+			if (panel & MDP4_PANEL_LCDC)
+				mdp4_primary_vsync_lcdc();
+		}
 #ifdef CONFIG_FB_MSM_DTV
 		if (isr & INTR_EXTERNAL_VSYNC) {
 			dma = &dma_e_data;
