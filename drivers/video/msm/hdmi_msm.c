@@ -273,6 +273,7 @@ static void hdmi_msm_hpd_state_work(struct work_struct *work)
 
 	hdmi_msm_state->hpd_stable = 1;
 	mod_timer(&hdmi_msm_state->hpd_state_timer, jiffies + HZ);
+	DEV_INFO("HDMI HPD: event detected\n");
 
 	if (!hdmi_msm_state->hpd_cable_chg_detected) {
 		enable_irq(hdmi_msm_state->irq);
@@ -414,14 +415,15 @@ static irqreturn_t hdmi_msm_isr(int irq, void *dev_id)
 	if ((audio_int_val & (1 << 1)) && (audio_int_val & (1 << 0))) {
 		/* FIFO Underrun occured, clr it */
 		HDMI_OUTP(0x02CC, audio_int_val | (1 << 0));
-		DEV_DBG("%s: AUD_FIFO_URUN", __func__);
 
-		++fifo_underrun_int_occurred;
-		if (fifo_underrun_int_occurred >= occurrence_limit) {
+		++fifo_urun_int_occurred;
+		DEV_INFO("HDMI AUD_FIFO_URUN: %d\n", fifo_urun_int_occurred);
+
+		if (fifo_urun_int_occurred >= occurrence_limit) {
 			HDMI_OUTP(0x02CC, HDMI_INP(0x02CC) & ~(1 << 1));
-			DEV_INFO("AUD_FIFO_URUN int has been disabled "
+			DEV_INFO("HDMI AUD_FIFO_URUN: INT has been disabled "
 				"by the ISR after %d occurences...\n",
-				fifo_underrun_int_occurred);
+				fifo_urun_int_occurred);
 		}
 		return IRQ_HANDLED;
 	}
@@ -435,7 +437,7 @@ static irqreturn_t hdmi_msm_isr(int irq, void *dev_id)
 		++sample_drop_int_occurred;
 		if (sample_drop_int_occurred >= occurrence_limit) {
 			HDMI_OUTP(0x02CC, HDMI_INP(0x02CC) & ~(1 << 3));
-			DEV_INFO("AUD_SAM_DROP int has been disabled "
+			DEV_INFO("HDMI AUD_SAM_DROP: INT has been disabled "
 				"by the ISR after %d occurences...\n",
 				sample_drop_int_occurred);
 		}
@@ -581,6 +583,7 @@ static void hdmi_msm_set_mode(boolean power_on)
 	}
 	/* HDMI_CTRL */
 	HDMI_OUTP(0x0000, reg_val);
+	DEV_DBG("HDMI Core: %s\n", power_on ? "Enable" : "Disable");
 }
 
 static void msm_hdmi_init_ddc(void)
@@ -823,7 +826,7 @@ again:
 		else
 			HDMI_OUTP_ND(0x020C, BIT(1)); /* SOFT_RESET */
 		if (retry-- > 0) {
-			DEV_INFO("%s[%s]: failed NACK=%08x, retry=%d\n",
+			DEV_DBG("%s[%s]: failed NACK=%08x, retry=%d\n",
 				__func__, what, reg_val, retry);
 			msleep(100);
 			goto again;
@@ -846,6 +849,7 @@ static int hdmi_msm_ddc_read(uint32 dev_addr, uint32 offset, uint8 *data_buf,
 	uint32 reg_val, ndx;
 	int status = 0, retry = 5;
 	uint32 time_out_count;
+	int log_retry_fail = retry != 1;
 
 	if (NULL == data_buf) {
 		status = -EINVAL;
@@ -1016,7 +1020,7 @@ again:
 	if (reg_val) {
 		msleep(500);
 		if (retry-- > 0) {
-			DEV_INFO("%s(%s): failed NACK=0x%08x, retry=%d, "
+			DEV_DBG("%s(%s): failed NACK=0x%08x, retry=%d, "
 				"dev-addr=0x%02x, offset=0x%02x, "
 				"length=%d\n", __func__, what,
 				reg_val, retry, dev_addr,
@@ -1024,9 +1028,10 @@ again:
 			goto again;
 		}
 		status = -EIO;
-		DEV_ERR("%s(%s): failed NACK=0x%08x, dev-addr=0x%02x, "
-			"offset=0x%02x, length=%d\n", __func__, what, reg_val,
-			dev_addr, offset, data_len);
+		if (log_retry_fail)
+			DEV_ERR("%s(%s): failed NACK=0x%08x, dev-addr=0x%02x, "
+				"offset=0x%02x, length=%d\n", __func__, what,
+				reg_val, dev_addr, offset, data_len);
 		goto error;
 	}
 
@@ -1096,7 +1101,7 @@ static int hdmi_msm_read_edid(void)
 	external_common_state->read_edid_block = hdmi_msm_read_edid_block;
 	status = hdmi_common_read_edid();
 	if (!status)
-		DEV_INFO("EDID successfully read\n");
+		DEV_DBG("EDID: successfully read\n");
 
 error:
 	return status;
@@ -2198,6 +2203,7 @@ static void hdmi_msm_audio_off(void)
 	hdmi_msm_audio_info_setup(FALSE, 0, 0, FALSE);
 	hdmi_msm_audio_ctrl_setup(FALSE, 0);
 	hdmi_msm_audio_acr_setup(FALSE, 0, 0, 0);
+	DEV_INFO("HDMI Audio: Disabled\n");
 }
 
 static uint8 hdmi_msm_avi_iframe_lut[][14] = {
@@ -2484,7 +2490,7 @@ static int hdmi_msm_power_on(struct platform_device *pdev)
 	struct msm_fb_data_type *mfd = platform_get_drvdata(pdev);
 	uint32 hpd_ctrl;
 
-	DEV_DBG("power: ON (%dx%d %d)\n", mfd->var_xres, mfd->var_yres,
+	DEV_INFO("power: ON (%dx%d %d)\n", mfd->var_xres, mfd->var_yres,
 		mfd->var_pixclock);
 
 #ifdef CONFIG_FB_MSM_HDMI_MSM_PANEL_HDCP_SUPPORT
