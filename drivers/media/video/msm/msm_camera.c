@@ -2476,17 +2476,19 @@ static int __msm_release(struct msm_sync *sync)
 	if (!sync->opencnt) {
 		/* need to clean up system resource */
 		pr_info("%s, vfe_release\n", __func__);
-		if (sync->vfefn.vfe_release)
-			sync->vfefn.vfe_release(sync->pdev);
-		/*sensor release */
-		pr_info("%s, s_release\n", __func__);
-		sync->sctrl.s_release();
-		pr_info("%s, msm_camio_sensor_clk_off\n", __func__);
-		msm_camio_sensor_clk_off(sync->pdev);
-		if (sync->sfctrl.strobe_flash_release) {
-			pr_info("%s, strobe_flash_release\n", __func__);
-			sync->sfctrl.strobe_flash_release(
+		if (sync->core_powered_on) {
+			if (sync->vfefn.vfe_release)
+				sync->vfefn.vfe_release(sync->pdev);
+			/*sensor release */
+			pr_info("%s, s_release\n", __func__);
+			sync->sctrl.s_release();
+			pr_info("%s, msm_camio_sensor_clk_off\n", __func__);
+			msm_camio_sensor_clk_off(sync->pdev);
+			if (sync->sfctrl.strobe_flash_release) {
+				pr_info("%s, strobe_flash_release\n", __func__);
+				sync->sfctrl.strobe_flash_release(
 				sync->sdata->strobe_flash_data, 1);
+			}
 		}
 		kfree(sync->cropinfo);
 		sync->cropinfo = NULL;
@@ -2513,6 +2515,7 @@ static int __msm_release(struct msm_sync *sync)
 		wake_unlock(&sync->wake_lock);
 		sync->apps_id = NULL;
 		pr_info("%s: completed\n", __func__);
+		sync->core_powered_on = 0;
 	}
 	mutex_unlock(&sync->lock);
 
@@ -2976,7 +2979,8 @@ static struct msm_vfe_callback msm_vfe_s = {
 	.vfe_free = msm_vfe_sync_free,
 };
 
-static int __msm_open(struct msm_sync *sync, const char *const apps_id)
+static int __msm_open(struct msm_sync *sync, const char *const apps_id,
+			int is_controlnode)
 {
 	int rc = 0;
 
@@ -2994,7 +2998,7 @@ static int __msm_open(struct msm_sync *sync, const char *const apps_id)
 
 	sync->apps_id = apps_id;
 
-	if (!sync->opencnt) {
+	if (!sync->core_powered_on && !is_controlnode) {
 
 		wake_lock(&sync->suspend_lock);
 
@@ -3037,6 +3041,7 @@ static int __msm_open(struct msm_sync *sync, const char *const apps_id)
 				sync->vpefn.vpe_reg(&msm_vpe_s);
 			sync->unblock_poll_frame = 0;
 		}
+		sync->core_powered_on = 1;
 	}
 	sync->opencnt++;
 
@@ -3046,7 +3051,7 @@ msm_open_done:
 }
 
 static int msm_open_common(struct inode *inode, struct file *filep,
-			int once)
+			int once, int is_controlnode)
 {
 	int rc;
 	struct msm_cam_device *pmsm =
@@ -3067,7 +3072,7 @@ static int msm_open_common(struct inode *inode, struct file *filep,
 		return rc;
 	}
 
-	rc = __msm_open(pmsm->sync, MSM_APPS_ID_PROP);
+	rc = __msm_open(pmsm->sync, MSM_APPS_ID_PROP, is_controlnode);
 	if (rc < 0)
 		return rc;
 	filep->private_data = pmsm;
@@ -3077,7 +3082,7 @@ static int msm_open_common(struct inode *inode, struct file *filep,
 
 static int msm_open(struct inode *inode, struct file *filep)
 {
-	return msm_open_common(inode, filep, 1);
+	return msm_open_common(inode, filep, 1, 0);
 }
 
 static int msm_open_control(struct inode *inode, struct file *filep)
@@ -3089,7 +3094,7 @@ static int msm_open_control(struct inode *inode, struct file *filep)
 	if (!ctrl_pmsm)
 		return -ENOMEM;
 
-	rc = msm_open_common(inode, filep, 0);
+	rc = msm_open_common(inode, filep, 0, 1);
 	if (rc < 0) {
 		kfree(ctrl_pmsm);
 		return rc;
@@ -3283,6 +3288,7 @@ static int msm_sync_init(struct msm_sync *sync,
 	}
 
 	sync->opencnt = 0;
+	sync->core_powered_on = 0;
 	mutex_init(&sync->lock);
 	if (sync->sdata->strobe_flash_data) {
 		sync->sdata->strobe_flash_data->state = 0;
