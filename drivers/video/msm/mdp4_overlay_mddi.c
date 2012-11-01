@@ -546,6 +546,7 @@ void mdp4_mddi_overlay_kickoff(struct msm_fb_data_type *mfd,
 
 	if (pdata && pdata->power_on_panel_at_pan) {
 		wait_for_completion_killable(&pipe->comp);
+		mfd->dma_update_flag = 0;
 		pending_pipe = NULL;
 		up(&mfd->dma->pending_pipe_sem);
 	}
