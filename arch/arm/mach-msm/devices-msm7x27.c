@@ -30,6 +30,7 @@
 #include <asm/mach/mmc.h>
 #include <mach/msm_hsusb.h>
 
+#include "clock-pcom.h"
 #include "clock-voter.h"
 
 static struct resource resources_uart1[] = {
