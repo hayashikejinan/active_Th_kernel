@@ -1442,4 +1442,13 @@ config MSM_STANDALONE_POWER_COLLAPSE
        bool "Enable standalone power collapse"
        default n
 
+config MSM_SHOW_RESUME_IRQ
+	bool "Enable logging of interrupts that could have caused resume"
+	depends on ARCH_MSM8X60
+	default n
+	help
+		This option logs wake up interrupts that have triggered just before
+		the resume loop unrolls. Say Y if you want to debug why the system
+		resumed.
+
 endif
