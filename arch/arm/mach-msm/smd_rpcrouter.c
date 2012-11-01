@@ -20,6 +20,7 @@
 /* TODO: maybe make server_list_lock a mutex */
 /* TODO: pool fragments to avoid kmalloc/kfree churn */
 
+#include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
@@ -634,8 +635,6 @@ static struct rr_remote_endpoint *rpcrouter_lookup_remote_endpoint(uint32_t pid,
 	list_for_each_entry(ept, &remote_endpoints, list) {
 		if ((ept->pid == pid) && (ept->cid == cid)) {
 			spin_unlock_irqrestore(&remote_endpoints_lock, flags);
-			D("%s: Found r_ept %p for %d:%08x\n", __func__, ept,
-			   pid, cid);
 			return ept;
 		}
 	}
@@ -684,7 +683,7 @@ static int process_control_msg(struct rpcrouter_xprt_info *xprt_info,
 {
 	union rr_control_msg ctl;
 	struct rr_server *server;
-	struct rr_remote_endpoint *r_ept = NULL;
+	struct rr_remote_endpoint *r_ept;
 	int rc = 0;
 	unsigned long flags;
 	static int first = 1;
@@ -735,19 +734,13 @@ static int process_control_msg(struct rpcrouter_xprt_info *xprt_info,
 	case RPCROUTER_CTRL_CMD_RESUME_TX:
 		RR("o RESUME_TX id=%d:%08x\n", msg->cli.pid, msg->cli.cid);
 
-		do {
-			if (r_ept)
-				pr_err("%s: Oops - Wrong r_ept %p\n",
-					__func__, r_ept);
-			r_ept = rpcrouter_lookup_remote_endpoint(msg->cli.pid,
+		r_ept = rpcrouter_lookup_remote_endpoint(msg->cli.pid,
 							 msg->cli.cid);
-			if (!r_ept) {
-				printk(KERN_ERR "rpcrouter: Unable to resume"
-						" client\n");
-				return rc;
-			}
-		} while ((r_ept->pid != msg->cli.pid) ||
-			 (r_ept->cid != msg->cli.cid));
+		if (!r_ept) {
+			printk(KERN_ERR
+			       "rpcrouter: Unable to resume client\n");
+			break;
+		}
 		spin_lock_irqsave(&r_ept->quota_lock, flags);
 		r_ept->tx_quota_cntr = 0;
 		spin_unlock_irqrestore(&r_ept->quota_lock, flags);
@@ -1088,7 +1081,7 @@ static void do_read_data(struct work_struct *work)
 packet_complete:
 	spin_lock_irqsave(&ept->read_q_lock, flags);
 	D("%s: take read lock on ept %p\n", __func__, ept);
-	wake_lock_timeout(&ept->read_q_wake_lock, HZ*10);
+	wake_lock(&ept->read_q_wake_lock);
 	list_add_tail(&pkt->list, &ept->read_q);
 	wake_up(&ept->wait_q);
 	spin_unlock_irqrestore(&ept->read_q_lock, flags);
