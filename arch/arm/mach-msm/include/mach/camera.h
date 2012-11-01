@@ -188,6 +188,7 @@ struct msm_sensor_ctrl {
 	int (*s_release)(void);
 	int (*s_config)(void __user *);
 	enum msm_camera_type s_camera_type;
+	uint32_t s_mount_angle;
 #if defined(CONFIG_MACH_SEMC_ZEUS) || defined(CONFIG_MACH_SEMC_PHOENIX)
 	int (*s_get_capture_started)(void);
 #endif /* CONFIG_MACH_SEMC_ZEUS */

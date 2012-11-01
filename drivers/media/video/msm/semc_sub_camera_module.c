@@ -792,6 +792,7 @@ static int semc_camera_probe_init(
 	s->s_init = semc_camera_sensor_open_init;
 	s->s_release = semc_camera_sensor_release;
 	s->s_config = semc_camera_sensor_config;
+	s->s_mount_angle  = 0;
 
 	ret = semc_camera_sensor_on();
 	if (SEMC_CHK_ERR(ret)) {
