@@ -965,6 +965,7 @@ int __init msm_timer_init_time_sync(void (*timeout)(void))
 unsigned long long sched_clock(void)
 {
 	static cycle_t last_ticks;
+	static unsigned long long last_ns;
 	static DEFINE_SPINLOCK(msm_timer_sched_clock_lock);
 
 	struct msm_clock *clock;
@@ -980,13 +981,15 @@ unsigned long long sched_clock(void)
 	spin_lock_irqsave(&msm_timer_sched_clock_lock, irq_flags);
 	delta = (ticks - last_ticks) & cs->mask;
 
-	if (delta < cs->mask/2)
+	if (delta < cs->mask/2) {
 		last_ticks += delta;
+		last_ns += clocksource_cyc2ns(delta, cs->mult, cs->shift);
+	}
 
 	ticks = last_ticks;
 	spin_unlock_irqrestore(&msm_timer_sched_clock_lock, irq_flags);
 
-	return clocksource_cyc2ns(ticks, cs->mult, cs->shift);
+	return last_ns;
 }
 
 static void __init msm_timer_init(void)
