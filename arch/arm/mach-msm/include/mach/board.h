@@ -1,7 +1,7 @@
 /* arch/arm/mach-msm/include/mach/board.h
  *
  * Copyright (C) 2007 Google, Inc.
- * Copyright (c) 2008-2010, Code Aurora Forum. All rights reserved.
+ * Copyright (c) 2008-2011, Code Aurora Forum. All rights reserved.
  * Copyright (C) 2010 Sony Ericsson Mobile Communications AB.
  * Author: Brian Swetland <swetland@google.com>
  *
@@ -29,6 +29,8 @@
 #ifdef CONFIG_MSM_BUS_SCALING
 #include <mach/msm_bus.h>
 #endif
+
+#include <asm/clkdev.h>
 
 /* platform device data structures */
 struct msm_acpu_clock_platform_data {
@@ -343,7 +345,7 @@ void __init msm_map_msm8x60_io(void);
 void __init msm_map_msm7x30_io(void);
 void __init msm_map_comet_io(void);
 void __init msm_init_irq(void);
-void __init msm_clock_init(struct clk *clock_tbl, unsigned num_clocks);
+void __init msm_clock_init(struct clk_lookup *clock_tbl, unsigned num_clocks);
 void __init msm_acpu_clock_init(struct msm_acpu_clock_platform_data *);
 
 struct mmc_platform_data;
