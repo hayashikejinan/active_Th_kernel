@@ -716,3 +716,14 @@ void mdp4_mddi_overlay(struct msm_fb_data_type *mfd)
 	up(&mfd->dma->ov_sem);
 }
 
+int mdp4_mddi_overlay_cursor(struct fb_info *info, struct fb_cursor *cursor)
+{
+	struct msm_fb_data_type *mfd = info->par;
+	down(&mfd->dma->ov_sem);
+	if (mfd && mfd->panel_power_on) {
+		mdp4_mddi_dma_busy_wait(mfd, mddi_pipe);
+		mdp_hw_cursor_update(info, cursor);
+	}
+	up(&mfd->dma->ov_sem);
+	return 0;
+}

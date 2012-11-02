@@ -475,7 +475,7 @@ void mdp_dmap_vsync_set(int enable);
 int mdp_dmap_vsync_get(void);
 void mdp_hw_cursor_done(void);
 void mdp_hw_cursor_init(void);
-
+int mdp4_mddi_overlay_cursor(struct fb_info *info, struct fb_cursor *cursor);
 int mdp_ppp_blit(struct fb_info *info, struct mdp_blit_req *req);
 void mdp_vsync_config_update(struct msm_panel_info *pinfo);
 void mdp4_overlay_resource_release(void);
